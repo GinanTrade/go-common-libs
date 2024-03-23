@@ -3,7 +3,7 @@ package infra
 import (
 	"context"
 
-	config "github.com/GinanTrade/go-commmon-libs/config"
+	config "github.com/GinanTrade/go-common-libs/config"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

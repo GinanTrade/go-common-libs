@@ -5,7 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GinanTrade/go-commmon-libs/config"
+	"github.com/GinanTrade/go-common-libs/config"
+	authmodel "github.com/GinanTrade/go-common-libs/model/authentication"
+	http_model "github.com/GinanTrade/go-common-libs/model/http"
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +19,7 @@ func Authentication() gin.HandlerFunc {
 
 		if tokenHeader == "" {
 
-			c.AbortWithStatusJSON(401, authentication.ResponseWebFailed{
+			c.AbortWithStatusJSON(401, http_model.ResponseWebFailed{
 				Type:    "UNAUTHORIZED",
 				Message: "invalid token provided",
 				Status:  "failed",
@@ -28,7 +30,7 @@ func Authentication() gin.HandlerFunc {
 		var tokenArray = strings.Split(tokenHeader, " ")
 
 		if len(tokenArray) < 2 {
-			c.AbortWithStatusJSON(401, authentication.ResponseWebFailed{
+			c.AbortWithStatusJSON(401, http_model.ResponseWebFailed{
 				Type:    "UNAUTHORIZED",
 				Message: "invalid token format",
 				Status:  "failed",
@@ -39,7 +41,7 @@ func Authentication() gin.HandlerFunc {
 		var isValidBearer bool = tokenArray[0] == "Bearer"
 
 		if !isValidBearer {
-			c.AbortWithStatusJSON(401, authentication.ResponseWebFailed{
+			c.AbortWithStatusJSON(401, http_model.ResponseWebFailed{
 				Type:    "UNAUTHORIZED",
 				Message: "Invalid bearer token",
 				Status:  "failed",
@@ -49,14 +51,14 @@ func Authentication() gin.HandlerFunc {
 		tokenHeader = tokenArray[1]
 		token, err := jwt.Parse(tokenHeader, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				panic(model.UnauthorizedError{Message: "unexpected signing method"})
+				panic(http_model.UnauthorizedError{Message: "unexpected signing method"})
 			}
 
 			return []byte(config.Config.Get("SECRET_KEY")), nil
 		})
 
 		if err != nil || !token.Valid {
-			c.AbortWithStatusJSON(401, model.ResponseWebFailed{
+			c.AbortWithStatusJSON(401, http_model.ResponseWebFailed{
 				Type:    "UNAUTHORIZED",
 				Message: err.Error(),
 				Status:  "failed",
@@ -70,7 +72,7 @@ func Authentication() gin.HandlerFunc {
 			panic(errors.New("INTERNAL SERVER ERROR"))
 		}
 
-		var data model.Auth = model.Auth{
+		var data authmodel.Auth = authmodel.Auth{
 			LastName:  claims["last_name"].(string),
 			FirstName: claims["first_name"].(string),
 			Iat:       claims["iat"].(float64),
@@ -89,7 +91,7 @@ func Authentication() gin.HandlerFunc {
 		providedTime := time.Unix(providedTimeStamp, 0)
 
 		if providedTime.Before(now) {
-			c.AbortWithStatusJSON(401, model.ResponseWebFailed{
+			c.AbortWithStatusJSON(401, http_model.ResponseWebFailed{
 				Type:    "UNAUTHORIZED",
 				Message: "tokenis expired",
 				Status:  "failed",
